@@ -1,0 +1,93 @@
+---
+title: "Class 16"
+author: "Tasnia Sharia (PID A15931128)"
+date: "11/21/2021"
+output: html_document
+---
+
+# Section 1. Differential Expression Analysis
+
+```{r}
+library(DESeq2)
+```
+
+```{r}
+# loading the files
+metaFile <- "GSE37704_metadata.csv"
+countFile <- "GSE37704_featurecounts.csv"
+
+# Import metadata and take a peak
+colData = read.csv(metaFile, row.names=1)
+head(colData)
+
+# Import countdata
+countData = read.csv(countFile, row.names=1)
+head(countData)
+```
+
+> **Complete the code below to remove the troublesome first column from countData**
+
+```{r}
+# Note we need to remove the odd first $length col
+countData <- as.matrix(countData[,-1])
+head(countData)
+```
+
+> **Q. Complete the code below to filter countData to exclude genes (i.e. rows) where we have 0 read count across all samples (i.e. columns).**
+
+```{r}
+# Filter count data where you have 0 read count across all samples.
+countData = countData[c(-1,-2,-4,-5), ]
+head(countData)
+```
+
+**Running DESeq2**
+
+Lets setup the DESeqDataSet object required for the DESeq() function and then run the DESeq pipeline.
+
+```{r}
+dds = DESeqDataSetFromMatrix(countData=countData,
+                             colData=colData,
+                             design=~condition)
+dds = DESeq(dds)
+```
+
+```{r}
+dds
+```
+
+```{r}
+res = results(dds, contrast=c("condition", "hoxa1_kd", "control_sirna"))
+```
+
+> **Q. Call the summary() function on your results to get a sense of how many genes are up or down-regulated at the default 0.1 p-value cutoff.**
+
+```{r}
+summary(res)
+```
+
+**Volcano plot**
+
+we will make a volcano plot, a commonly produced visualization that is a plot of log2 fold change vs -log adjusted p-value.
+
+```{r}
+plot( res$log2FoldChange, -log(res$padj) )
+```
+
+> **Q. Improve this plot by completing the below code, which adds color and axis labels**
+
+```{r}
+# Make a color vector for all genes
+mycols <- rep("gray", nrow(res) )
+
+# Color red the genes with absolute fold change above 2
+mycols[ abs(res$log2FoldChange) > 2 ] <- "red"
+
+# Color blue those with adjusted p-value less than 0.01
+#  and absolute fold change more than 2
+inds <- (p.adjust(0.01))& (abs(res$log2FoldChange) > 2 )
+mycols[ inds ] <- "blue"
+
+plot( res$log2FoldChange, -log(res$padj), col=, xlab="Log2(FoldChange)", ylab="-Log(P-value)" )
+```
+
