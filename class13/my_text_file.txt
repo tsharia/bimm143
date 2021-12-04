@@ -1,0 +1,2 @@
+
+This is just a plain text editor and not a very fancy one.
